@@ -137,23 +137,23 @@ def tcs_data():
 
 if __name__=="__main__":
 
-    print("\nFUNCTION for Question 1:")
-    print("-"*80)
-    num=int(input("Enter the number: "))
-    print(f"The factorial of number {num} is: {factorial(num)}")
+    # print("\nFUNCTION for Question 1:")
+    # print("-"*80)
+    # num=int(input("Enter the number: "))
+    # print(f"The factorial of number {num} is: {factorial(num)}")
     
-    print("\n\nFUNCTION for Question 2:")
-    print("-"*80)
-    generate_arrays()
+    # print("\n\nFUNCTION for Question 2:")
+    # print("-"*80)
+    # generate_arrays()
 
-    print("\n\nFUNCTION for Question 3:")
-    print("-"*80)
-    gaussian_analysis()
+    # print("\n\nFUNCTION for Question 3:")
+    # print("-"*80)
+    # gaussian_analysis()
 
     print("\n\nFUNCTION for Question 4:")
     print("-"*80)
     read_csv()
 
-    print("\n\nFUNCTION for Question 5:")
-    print("-"*80)
-    tcs_data()
+    # print("\n\nFUNCTION for Question 5:")
+    # print("-"*80)
+    # tcs_data()
