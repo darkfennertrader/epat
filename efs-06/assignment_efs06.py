@@ -4,7 +4,7 @@ import pandas as pd
 import numpy as np
 
 
-####################    QUESTION 1    ##########################################
+####################    QUESTION 1 functions    ################################
 
 
 def read_data():
@@ -132,7 +132,7 @@ def annualized_tracking_error(df):
     print(results)
 
 
-####################    QUESTION 2   ##########################################
+####################    QUESTION 2 functions  #################################
 
 
 def read_data2():
@@ -249,19 +249,19 @@ def asset_allocation(
             sharp_ratio = (
                 df_metric["daily_ret"].mean() / df_metric["daily_ret"].std()
             ) * (252**0.5)
-            # fig, axs = plt.subplots(2)
-            # fig.tight_layout()
-            # df_metric[["Tot_pos"]].plot(
-            #     ax=axs[0],
-            #     color="black",
-            #     grid=True,
-            #     figsize=(20, 15),
-            # )
-            # df_metric[["Nifty_pos", "Junior_pos", "Gold_pos"]].plot(
-            #     ax=axs[1],
-            #     grid=True,
-            #     figsize=(20, 15),
-            # )
+            fig, axs = plt.subplots(2)
+            fig.tight_layout()
+            df_metric[["Tot_pos"]].plot(
+                ax=axs[0],
+                color="black",
+                grid=True,
+                figsize=(20, 15),
+            )
+            df_metric[["Nifty_pos", "Junior_pos", "Gold_pos"]].plot(
+                ax=axs[1],
+                grid=True,
+                figsize=(20, 15),
+            )
 
             plt.show()
             print(f"\nAnnualized Returns (CAGR) for {year_str}: {(cagr*100):.3f}%")
@@ -269,6 +269,83 @@ def asset_allocation(
             print(f"Sharpe Ratio (SR) for {year_str}: {sharp_ratio:.3f}")
 
     return df_post
+
+
+####################    QUESTION 3 functions  #################################
+
+
+def read_data3(filepath, stock):
+    df_2016 = pd.read_csv(
+        f"{filepath}".format("16", stock),
+        index_col=0,
+        usecols=["Date", "Close Price"],
+        parse_dates=True,
+    )
+    df_2016.rename(columns={"Close Price": stock}, inplace=True)
+    df_2017 = pd.read_csv(
+        f"{filepath}".format("17", stock),
+        index_col=0,
+        usecols=["Date", "Close Price"],
+        parse_dates=True,
+    )
+    df_2017.rename(columns={"Close Price": stock}, inplace=True)
+
+    return pd.concat([df_2016, df_2017], axis=0)
+
+
+def indian_portfolio_ret(dataframe, indian_stocks):
+
+    df = dataframe.copy()
+
+    # normalized return for every stock
+    for stock in indian_stocks:
+        df[stock + "_norm_ret"] = df[stock] / df.iloc[0][stock]
+
+    # allocation for every stock
+    for stock, allocation in zip(
+        indian_stocks, [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
+    ):
+        df[stock + "_alloc"] = df[stock + "_norm_ret"] * allocation
+
+    # position for every stock
+    for stock in indian_stocks:
+        df[stock + "_pos"] = df[stock + "_alloc"] * 100
+
+    # keep only the necessary columns
+    stocks = list(indian_stocks)
+    col_to_keep = [stock + "_pos" for stock in stocks]
+    df = df[col_to_keep]
+
+    # total portfolio position
+    df["Tot_pos"] = df.sum(axis=1)
+
+    # daily return
+    df["daily_ret"] = df["Tot_pos"].pct_change(1)
+    print(df.head())
+    print(df.tail())
+    print(df.shape)
+
+    fig, axs = plt.subplots(2)
+    # fig.tight_layout()
+    df[["Tot_pos"]].plot(
+        ax=axs[0],
+        color="black",
+        grid=True,
+        figsize=(20, 15),
+    )
+    df[col_to_keep].plot(
+        ax=axs[1],
+        grid=True,
+        figsize=(20, 15),
+    )
+
+    plt.show()
+
+    cum_return = (df["Tot_pos"][-1] / df["Tot_pos"][0] - 1)*100
+    print(f"Cumulative Return for portfolio 2016-2017: {cum_return:.2f}%")
+
+
+###########################################################################
 
 
 if __name__ == "__main__":
@@ -306,20 +383,20 @@ if __name__ == "__main__":
     filepath1 = "./Q2-Data/Nifty ETF.xlsx"
     filepath2 = "./Q2-Data/Junior ETF.xlsx"
     filepath3 = "./Q2-Data/Gold ETF.xlsx"
-    df = read_data2()
-    eobq = pd.date_range(start="2016-01-01", end="2017-12-30", freq="BQ").to_list()
+    # df = read_data2()
+    # eobq = pd.date_range(start="2016-01-01", end="2017-12-30", freq="BQ").to_list()
 
-    df_previous = pd.DataFrame()
-    starting_date = datetime(2016, 1, 1)
-    starting_fund = 100
+    # df_previous = pd.DataFrame()
+    # starting_date = datetime(2016, 1, 1)
+    # starting_fund = 100
 
-    for idx_list in range(len(eobq)):
-        end_date = eobq[idx_list]
-        df_output = asset_allocation(
-            df, starting_fund, starting_date, end_date, df_previous
-        )
-        df_previous = df_output.copy()
-        starting_date = end_date
+    # for idx_list in range(len(eobq)):
+    #     end_date = eobq[idx_list]
+    #     df_output = asset_allocation(
+    #         df, starting_fund, starting_date, end_date, df_previous
+    #     )
+    #     df_previous = df_output.copy()
+    #     starting_date = end_date
 
     print("\n\nSolution for QUESTION 2")
     print("-" * 80)
@@ -336,6 +413,37 @@ if __name__ == "__main__":
     print("-" * 80)
 
     ############################################################################
+    filepath = "./Q3-Data/01-01-20{0}-TO-31-12-20{0}{1}EQN.csv"
+
+    # list of chosen stocks from NSE (National Stock Exchange)
+    """ 
+    downloaded from:
+    https://www1.nseindia.com/products/content/equities/equities/eq_security.htm
+    """
+
+    indian_stocks = (
+        "TATASTEEL",
+        "ONGC",
+        "ITC",
+        "TATAMOTORS",
+        "HINDALCO",
+        "COALINDIA",
+        "RELIANCE",
+        "NTPC",
+        "POWERGRID",
+        "SUNPHARMA",
+    )
+
+    df_final = pd.DataFrame()
+    for stock in indian_stocks:
+        df = read_data3(filepath, stock)
+        df_final = pd.concat([df_final, df], axis=1)
+
+    df_final.to_csv("./Q3-Data/final.csv")
+    print(df_final.head())
+    print(df_final.shape)
+    indian_portfolio_ret(df_final, indian_stocks)
+
     print("\n\nSolution for QUESTION 3")
     print("-" * 80)
     print()
