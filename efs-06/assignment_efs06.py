@@ -2,6 +2,7 @@ from datetime import datetime
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
+import statsmodels.api as sm
 
 
 ####################    QUESTION 1 functions    ################################
@@ -249,21 +250,25 @@ def asset_allocation(
             sharp_ratio = (
                 df_metric["daily_ret"].mean() / df_metric["daily_ret"].std()
             ) * (252**0.5)
-            fig, axs = plt.subplots(2)
-            fig.tight_layout()
-            df_metric[["Tot_pos"]].plot(
-                ax=axs[0],
-                color="black",
-                grid=True,
-                figsize=(20, 15),
-            )
-            df_metric[["Nifty_pos", "Junior_pos", "Gold_pos"]].plot(
-                ax=axs[1],
-                grid=True,
-                figsize=(20, 15),
-            )
 
-            plt.show()
+            # UNCOMMENT THIS BLOCK OF CODE TO GRAPH THE PORTFOLIO RETURNS
+            #############################################################
+            # fig, axs = plt.subplots(2)
+            # fig.tight_layout()
+            # df_metric[["Tot_pos"]].plot(
+            #     ax=axs[0],
+            #     color="black",
+            #     grid=True,
+            #     figsize=(20, 15),
+            # )
+            # df_metric[["Nifty_pos", "Junior_pos", "Gold_pos"]].plot(
+            #     ax=axs[1],
+            #     grid=True,
+            #     figsize=(20, 15),
+            # )
+            # plt.show()
+            #############################################################
+
             print(f"\nAnnualized Returns (CAGR) for {year_str}: {(cagr*100):.3f}%")
             # SHARPE ratio:
             print(f"Sharpe Ratio (SR) for {year_str}: {sharp_ratio:.3f}")
@@ -320,34 +325,83 @@ def indian_portfolio_ret(dataframe, indian_stocks):
     df["Tot_pos"] = df.sum(axis=1)
 
     # daily return
-    df["daily_ret"] = df["Tot_pos"].pct_change(1)
-    print(df.head())
-    print(df.tail())
-    print(df.shape)
+    df["Y"] = df["Tot_pos"].pct_change(1)
 
-    fig, axs = plt.subplots(2)
-    # fig.tight_layout()
-    df[["Tot_pos"]].plot(
-        ax=axs[0],
-        color="black",
-        grid=True,
-        figsize=(20, 15),
-    )
-    df[col_to_keep].plot(
-        ax=axs[1],
-        grid=True,
-        figsize=(20, 15),
-    )
+    # UNCOMMENT THIS BLOCK OF CODE TO GRAPH THE PORTFOLIO RETURNS
+    #############################################################
+    # # plot portfolio and its components
+    # fig, axs = plt.subplots(2)
+    # # fig.tight_layout()
+    # df[["Tot_pos"]].plot(
+    #     ax=axs[0],
+    #     color="black",
+    #     grid=True,
+    #     figsize=(20, 15),
+    # )
+    # df[col_to_keep].plot(
+    #     ax=axs[1],
+    #     grid=True,
+    #     figsize=(20, 15),
+    # )
+    # plt.show()
+    #############################################################
 
-    plt.show()
-
-    cum_return = (df["Tot_pos"][-1] / df["Tot_pos"][0] - 1)*100
+    cum_return = (df["Tot_pos"][-1] / df["Tot_pos"][0] - 1) * 100
+    print()
+    print("-" * 60)
     print(f"Cumulative Return for portfolio 2016-2017: {cum_return:.2f}%")
+    print("-" * 60)
+    print()
+
+    return df["Y"]
+
+
+def read_dependant_var(df):
+    filepath1 = "./Q3-Data/Nifty ETF.xlsx"
+    filepath2 = "./Q3-Data/Junior ETF.xlsx"
+
+    df_nifty = pd.read_excel(
+        filepath1,
+        skiprows=3,
+        names=["Date", "Nifty"],
+        index_col=0,
+        parse_dates=True,
+        engine="openpyxl",
+    )
+
+    df_junior = pd.read_excel(
+        filepath2,
+        skiprows=3,
+        names=["Date", "Junior"],
+        index_col=0,
+        parse_dates=True,
+        engine="openpyxl",
+    )
+    df_nifty["nifty_daily_ret"] = df_nifty["Nifty"].pct_change(1)
+    df_nifty.drop(columns=["Nifty"], inplace=True)
+    df_junior["junior_daily_ret"] = df_junior["Junior"].pct_change(1)
+    df_junior.drop(columns=["Junior"], inplace=True)
+
+    return pd.concat([df, df_nifty, df_junior], axis=1)
+
+
+def linear_regression(df):
+    df_final = read_dependant_var(df)
+    df_final.dropna(inplace=True)
+    # independant variable is our chosen portfolio of daily returns
+    Y = df_final["Y"]
+    # dependant variables are Nifty and Junior ETFs
+    R = df_final[["nifty_daily_ret", "junior_daily_ret"]]
+    # adding a constant to the model
+    R = sm.add_constant(R)
+
+    model = sm.OLS(Y, R).fit()
+    # predictions = model.predict(R)
+    print_model = model.summary()
+    print(print_model)
 
 
 ###########################################################################
-
-
 if __name__ == "__main__":
 
     # Give the location of the file (OS: Ubuntu 20.04 LTS Unix distro)
@@ -356,13 +410,13 @@ if __name__ == "__main__":
     filepath3 = "./Q1-Data/Kotak Nifty ETF.xlsx"
     filepath4 = "./Q1-Data/HDFC Nifty ETF.xlsx"
     filepath5 = "./Q1-Data/UTI Nifty ETF.xlsx"
-    # df = read_data()
-    # annualized_tracking_error(df)
+    df = read_data()
+    annualized_tracking_error(df)
 
     print("\n\nSolution for QUESTION 1")
     print("-" * 80)
     print(
-        "Deliverable 1: Arrange the four funds (Reliance, Kotak, HDFC and UTI) in the increasing order of T E in 2016 and 2017"
+        "Deliverable 1: Arrange the four funds (Reliance, Kotak, HDFC and UTI) in the increasing order of TE in 2016 and 2017"
     )
     print("Response for 2016: Reliance, Kotac, UTI, HDFC")
     print("Response for 2017: Reliance, Kotac, HDFC, UTI")
@@ -383,20 +437,20 @@ if __name__ == "__main__":
     filepath1 = "./Q2-Data/Nifty ETF.xlsx"
     filepath2 = "./Q2-Data/Junior ETF.xlsx"
     filepath3 = "./Q2-Data/Gold ETF.xlsx"
-    # df = read_data2()
-    # eobq = pd.date_range(start="2016-01-01", end="2017-12-30", freq="BQ").to_list()
+    df = read_data2()
+    eobq = pd.date_range(start="2016-01-01", end="2017-12-30", freq="BQ").to_list()
 
-    # df_previous = pd.DataFrame()
-    # starting_date = datetime(2016, 1, 1)
-    # starting_fund = 100
+    df_previous = pd.DataFrame()
+    starting_date = datetime(2016, 1, 1)
+    starting_fund = 100
 
-    # for idx_list in range(len(eobq)):
-    #     end_date = eobq[idx_list]
-    #     df_output = asset_allocation(
-    #         df, starting_fund, starting_date, end_date, df_previous
-    #     )
-    #     df_previous = df_output.copy()
-    #     starting_date = end_date
+    for idx_list in range(len(eobq)):
+        end_date = eobq[idx_list]
+        df_output = asset_allocation(
+            df, starting_fund, starting_date, end_date, df_previous
+        )
+        df_previous = df_output.copy()
+        starting_date = end_date
 
     print("\n\nSolution for QUESTION 2")
     print("-" * 80)
@@ -411,6 +465,7 @@ if __name__ == "__main__":
         "* from the numerator of SR we should subtract the risk free rate. We assume it equals to zero since we do not have data"
     )
     print("-" * 80)
+    print()
 
     ############################################################################
     filepath = "./Q3-Data/01-01-20{0}-TO-31-12-20{0}{1}EQN.csv"
@@ -442,11 +497,22 @@ if __name__ == "__main__":
     df_final.to_csv("./Q3-Data/final.csv")
     print(df_final.head())
     print(df_final.shape)
-    indian_portfolio_ret(df_final, indian_stocks)
+    df = indian_portfolio_ret(df_final, indian_stocks)
+    linear_regression(df)
 
     print("\n\nSolution for QUESTION 3")
     print("-" * 80)
+    print("Deliverable 1: Compute the coefficients β1 and β2:")
+    print("β1 (Nifty coeff.) = .9633")
+    print("β2 (Junior coeff.) = .2247")
+    print("COMMENT: The returns of our portfolio is mainly explained by the Nifty ETF")
     print()
+    print(
+        "Deliverable 2: Compute of Portfolio return variation that is not explained by Nifty ETF and Junior ETF return variation"
+    )
+    print(
+        "COMMENT: Since R^2 is 0.634 this implies that 36.6% of our portfolio return variation is unexplained by our model"
+    )
     print("-" * 80)
 
     ############################################################################
