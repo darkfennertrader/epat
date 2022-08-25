@@ -8,4 +8,5 @@ TA_Lib*
 /efs-*
 /mlt-*
 /capstone
-.*
+.gitignore
+/.ipynb_checkpoints
