@@ -2,7 +2,8 @@
 /.vscode
 *.zip
 TA_Lib*
+/asq-*
 /mlt*
-/tbp*
-/efs*
-/mlt*
+/tbp-*
+/efs-*
+/mlt-*
