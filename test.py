@@ -94,16 +94,17 @@ def backtest_strategy(data):
 
 
 if __name__ == "__main__":
+    pass
 
-    df = download_daily_data(ticker, start, end)
-    print(df.tail(3))
-    print(df.shape)
+    # df = download_daily_data(ticker, start, end)
+    # print(df.tail(3))
+    # print(df.shape)
 
-    dfbb = df.copy()
-    # we don't need the mid band and use '_' to esclude the column
-    dfbb["UpperBB"], _, dfbb["LowerBB"] = BBANDS(
-        dfbb["Adj Close"], timeperiod=20, nbdevup=2, nbdevdn=2, matype=0
-    )
+    # dfbb = df.copy()
+    # # we don't need the mid band and use '_' to esclude the column
+    # dfbb["UpperBB"], _, dfbb["LowerBB"] = BBANDS(
+    #     dfbb["Adj Close"], timeperiod=20, nbdevup=2, nbdevdn=2, matype=0
+    # )
 
-    dfbb = compute_indicators(dfbb)
-    dfbb = backtest_strategy(dfbb)
+    # dfbb = compute_indicators(dfbb)
+    # dfbb = backtest_strategy(dfbb)
